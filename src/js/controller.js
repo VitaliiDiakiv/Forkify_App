@@ -1,43 +1,48 @@
-const recipeContainer = document.querySelector('.recipe');
+import * as model from './model.js';
+import recipeView from './views/recipeView.js';
+import searchView from './views/searchView.js';
+import resultsView from './views/resultsView.js';
+import 'core-js/stable';
+import 'regenerator-runtime/runtime';
 
-const timeout = function (s) {
-  return new Promise(function (_, reject) {
-    setTimeout(function () {
-      reject(new Error(`Request took too long! Timeout after ${s} second`));
-    }, s * 1000);
-  });
-};
+if (module.hot) {
+  module.hot.accept();
+}
 
-// https://forkify-api.herokuapp.com/v2
-
-///////////////////////////////////////
-
-const showRecipe = async function () {
+const controlRecipe = async function () {
   try {
-    const res = await fetch(
-      'https://forkify-api.herokuapp.com/api/v2/recipes/664c8f193e7aa067e94e86af'
-    );
-    const data = await res.json();
+    const id = window.location.hash.slice(1);
 
-    if (!res.ok) {
-      throw new Error(`${data.message} (${res.status})`);
-    }
+    if (!id) return;
+    recipeView.renderSpinner();
 
-    let { recipe } = data.data;
-    recipe = {
-      id: recipe.id,
-      title: recipe.title,
-      publisher: recipe.publisher,
-      sourceUrl: recipe.source_url,
-      image: recipe.image_url,
-      servings: recipe.servings,
-      cookingTime: recipe.cooking_time,
-      ingredients: recipe.ingredients,
-    };
-    console.log(recipe);
+    //Loading recipe
+    await model.loadRecipe(id);
+
+    //render the recipe
+    recipeView.render(model.state.recipe);
   } catch (err) {
-    alert(err);
+    recipeView.renderError();
   }
 };
 
-showRecipe();
+const controlSearchResults = async function () {
+  try {
+    resultsView.renderSpinner();
+
+    const query = searchView.getQuery();
+    if (!query) return;
+
+    await model.loadSearchResults(query);
+
+    resultsView.render(model.state.search.results);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const init = function () {
+  recipeView.addHandlerRender(controlRecipe);
+  searchView.addHandlerSearch(controlSearchResults);
+};
+init();
