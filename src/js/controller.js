@@ -92,6 +92,10 @@ const controlAddRecipe = async function (newRecipe) {
     }, MODAL_CLOSE * 1000);
 
     addRecipeView.renderMessage();
+
+    bookmarksView.render(model.state.bookmarks);
+
+    window.history.pushState(null, '', `#${model.state.recipe.id}`);
   } catch (err) {
     console.error(err);
     addRecipeView.renderError(err.message);
